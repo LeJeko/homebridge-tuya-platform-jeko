@@ -1,7 +1,7 @@
 {
   "name": "homebridge-tuya-platform-jeko",
   "displayName": "Tuya Jeko",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "Fork version of official Tuya Homebridge plugin. Brings a bunch of bug fix and new device support.",
   "license": "MIT",
   "repository": {
