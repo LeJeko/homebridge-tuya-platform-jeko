@@ -5,10 +5,11 @@ const SCHEMA_CODE = {
   TARGET_DOOR_STATE: ['switch_1'],
   OPEN_TIME: ['open_time'],
   STAY_OPEN_TIME: ['stay_open_time'],
+  AUTO_CLOSE: ['auto_close'],
 };
 
 export default class GarageDoorAccessory extends BaseAccessory {
-  // Variable pour stocker l'état simulé de la porte
+  // Variable to store the simulated state of the door
   private simulatedDoorState?: number;
   private simulatedTargetDoorState?: number;
 
@@ -28,11 +29,11 @@ export default class GarageDoorAccessory extends BaseAccessory {
 
   configureCurrentDoorState() {
     const { CLOSED, STOPPED } = this.Characteristic.CurrentDoorState;
-    // On initialise l'état simulé à CLOSED par défaut
+    // Initialize the simulated state to CLOSED by default
     this.simulatedDoorState = CLOSED;
     this.mainService().getCharacteristic(this.Characteristic.CurrentDoorState)
       .onGet(() => {
-        // Retourne l'état simulé, plutôt que de recalculer depuis les DP
+        // Return the simulated state, rather than recalculating from the DP
         return this.simulatedDoorState ?? STOPPED;
       });
   }
@@ -43,24 +44,28 @@ export default class GarageDoorAccessory extends BaseAccessory {
       return;
     }
 
-    // Récupération des temps depuis le device ou utilisation des valeurs par défaut.
-    let openTime = 10;       // Durée d'ouverture/fermeture par défaut (en secondes)
-    let stayOpenTime = 15;  // Durée pendant laquelle la porte reste ouverte par défaut (en secondes)
+    // Retrieve times from the device or use default values.
+    let openTime = 10;       // Default open/close duration (in seconds)
+    let stayOpenTime = 15;  // Default duration the door stays open (in seconds)
+    let autoClose = true;  // Auto close enabled by default
 
-    // 1. Récupérer l'override pour cet appareil à partir de la config Homebridge (deviceOverrides)
-    //    La façon de faire dépend de votre plugin / structure. Exemple :
+    // 1. Retrieve the override for this device from the Homebridge config (deviceOverrides)
+    //    The method depends on your plugin/structure. Example:
     this.log.debug('device:', JSON.stringify(this.device, null, 2));
     this.log.debug('id:', this.device.id);
     const deviceOverride = this.platform.config.options.deviceOverrides?.find(ov => ov.id === this.device.id);
     this.log.debug('deviceOverride:', JSON.stringify(deviceOverride, null, 2));
-    // 2. Lire open_time et stay_open_time si disponibles
+    // 2. Read open_time and stay_open_time if available
     if (deviceOverride) {
-      // Attention : vérifier si ces champs sont bien de type 'number'
+      // Note: Check if these fields are of type 'number'
       if (typeof deviceOverride.open_time === 'number') {
         openTime = deviceOverride.open_time;
       }
       if (typeof deviceOverride.stay_open_time === 'number') {
         stayOpenTime = deviceOverride.stay_open_time;
+      }
+      if (typeof deviceOverride.auto_close === 'boolean') {
+        autoClose = deviceOverride.auto_close;
       }
     }
 
@@ -70,7 +75,7 @@ export default class GarageDoorAccessory extends BaseAccessory {
     const { OPEN, CLOSED } = this.Characteristic.TargetDoorState;
     const { OPEN: C_OPEN, CLOSED: C_CLOSED, OPENING, CLOSING } = this.Characteristic.CurrentDoorState;
 
-    // On initialise la cible à CLOSED
+    // Initialize the target to CLOSED
     this.simulatedTargetDoorState = CLOSED;
 
     this.mainService().getCharacteristic(this.Characteristic.TargetDoorState)
@@ -80,48 +85,38 @@ export default class GarageDoorAccessory extends BaseAccessory {
       .onSet(async value => {
         if (value === OPEN) {
           this.simulatedTargetDoorState = value;
-          // 1) Passage à l'état OPENING
-          this.log.info('Début de l\'ouverture (OPENING)');
+          // 1) Transition to OPENING state
+          this.log.info('Starting to open (OPENING)');
           this.simulatedDoorState = OPENING;
           this.mainService().getCharacteristic(this.Characteristic.CurrentDoorState).updateValue(OPENING);
 
-          // 2) Envoi de la commande d'ouverture
+          // 2) Send the open command
           await this.sendCommands([{ code: schema.code, value: true }]);
-          await this.delay(1000); // Attente d'une seconde pour laisser le temps au device de réagir
-          await this.sendCommands([{ code: schema.code, value: false }]);
-          // 3) Attente du temps d'ouverture
-          this.log.info('Attente de openTime (' + openTime + ' sec) avant de passer à OPEN');
+          if (autoClose) {
+            // Reset remote to "close" as we simulate the door to close after stayOpenTime
+            // With automatic closing door, sending a close command to the remote reopens the door
+            // This is a workaround to prevent the door from reopening after stayOpenTime
+            await this.delay(1000); // Wait one second to give the device time to react
+            await this.sendCommands([{ code: schema.code, value: false }]);
+          }
+          // 3) Wait for the open time
+          this.log.info('Waiting for openTime (' + openTime + ' sec) before transitioning to OPEN');
           await this.delay(openTime * 1000);
 
-          // 4) Passage à l'état OPEN
-          this.log.info('Passage à l\'état OPEN');
+          // 4) Transition to OPEN state
+          this.log.info('Transitioning to OPEN state');
           this.simulatedDoorState = C_OPEN;
           this.mainService().getCharacteristic(this.Characteristic.CurrentDoorState).updateValue(C_OPEN);
 
-          // 5) La porte reste ouverte pendant stayOpenTime secondes
-          this.log.info('La porte reste ouverte pendant stayOpenTime (' + stayOpenTime + ' sec)');
-          await this.delay(stayOpenTime * 1000);
-
-          // 6) Passage à l'état CLOSING
-          this.log.info('Passage à l\'état CLOSING');
-          this.simulatedTargetDoorState = CLOSED;
-          this.simulatedDoorState = CLOSING;
-          this.mainService().getCharacteristic(this.Characteristic.TargetDoorState).updateValue(CLOSED);
-          this.mainService().getCharacteristic(this.Characteristic.CurrentDoorState).updateValue(CLOSING);
-
-          // 7) Envoi de la commande de fermeture
-          // await this.sendCommands([{ code: schema.code, value: false }]);
-
-          // 8) Attente du temps de fermeture
-          this.log.info('Attente de openTime (' + openTime + ' sec) pour la fermeture');
-          await this.delay(openTime * 1000);
-
-          // 9) Passage à l'état CLOSED
-          this.log.info('Passage à l\'état CLOSED');
-          this.simulatedDoorState = C_CLOSED;
-          this.mainService().getCharacteristic(this.Characteristic.CurrentDoorState).updateValue(C_CLOSED);
+          if (autoClose) {
+            // 5) The door stays open for stayOpenTime seconds than onSet(CLOSED) is called
+            this.log.info('The door stays open for stayOpenTime (' + stayOpenTime + ' sec)');
+            await this.delay(stayOpenTime * 1000);
+            this.simulatedTargetDoorState = CLOSED;
+            this.mainService().getCharacteristic(this.Characteristic.TargetDoorState).updateValue(CLOSED);
+          }
         } else {
-          // Commande de fermeture immédiate
+          // Immediate close command
           this.simulatedDoorState = CLOSING;
           this.mainService().getCharacteristic(this.Characteristic.CurrentDoorState).updateValue(CLOSING);
           await this.sendCommands([{ code: schema.code, value: false }]);

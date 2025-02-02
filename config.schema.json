@@ -139,13 +139,22 @@
                                         "functionBody": "return (model.options && model.options.deviceOverrides && model.options.deviceOverrides[arrayIndices[0]].category === 'ckmkzq');"
                                     }
                                 },
+                                "auto_close": {
+                                    "title": "Auto close",
+                                    "description": "Select if your door automatically closes after a set time",
+                                    "type": "boolean",
+                                    "default": true,
+                                    "condition": {
+                                        "functionBody": "return (model.options && model.options.deviceOverrides && model.options.deviceOverrides[arrayIndices[0]].category === 'ckmkzq');"
+                                    }
+                                },
                                 "stay_open_time": {
                                     "title": "Stay open time",
                                     "description": "The time in seconds the garage door will stay open",
                                     "type": "number",
                                     "default": 15,
                                     "condition": {
-                                        "functionBody": "return (model.options && model.options.deviceOverrides && model.options.deviceOverrides[arrayIndices[0]].category === 'ckmkzq');"
+                                        "functionBody": "return (model.options && model.options.deviceOverrides && model.options.deviceOverrides[arrayIndices[0]].category === 'ckmkzq') && && model.options.deviceOverrides[arrayIndices[0]].auto_close;"
                                     }
                                 },
                                 "unbridged": {
@@ -381,6 +390,9 @@
                                 },
                                 {
                                     "key": "options.deviceOverrides[].open_time"
+                                },
+                                {
+                                    "key": "options.deviceOverrides[].auto_close"
                                 },
                                 {
                                     "key": "options.deviceOverrides[].stay_open_time"
