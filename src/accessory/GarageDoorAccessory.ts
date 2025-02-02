@@ -112,11 +112,12 @@ export default class GarageDoorAccessory extends BaseAccessory {
             // Send "true" to open
             this.log.info('Sending ON (true) to open');
             await this.sendCommands([{ code: schema.code, value: true }]);
-
-            // If you do an impulse, turn it off after 1s
-            await this.delay(1000);
-            this.log.info('Ending impulse -> OFF (false)');
-            await this.sendCommands([{ code: schema.code, value: false }]);
+            if (autoClose) {
+              this.log.info('Auto-closing is enabled');
+              await this.delay(1000);
+              this.log.info('Ending impulse -> OFF (false)');
+              await this.sendCommands([{ code: schema.code, value: false }]);
+            }
 
             // Wait openTime
             this.log.info(`Waiting ${openTime}s for OPENING to complete`);
@@ -143,11 +144,6 @@ export default class GarageDoorAccessory extends BaseAccessory {
               this.mainService()
                 .getCharacteristic(this.Characteristic.CurrentDoorState)
                 .updateValue(CLOSING);
-
-              // Optionally send another impulse to close, if needed:
-              // await this.sendCommands([{ code: schema.code, value: true }]);
-              // await this.delay(1000);
-              // await this.sendCommands([{ code: schema.code, value: false }]);
 
               this.log.info(`Waiting ${openTime}s for CLOSING to complete`);
               await this.delay(openTime * 1000);

@@ -46,11 +46,6 @@ You can also manage those settings from Homebridge UI
                         "code": "key_type_1",
                         "newCode": "switch_1",
                         "type": "Boolean"
-                    },
-                    {
-                        "code": "doorcontact_state",
-                        "newCode": "doorcontact_state",
-                        "type": "Boolean"
                     }
                 ]
             }
