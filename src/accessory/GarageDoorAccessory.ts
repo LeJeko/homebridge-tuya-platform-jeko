@@ -117,15 +117,11 @@ export default class GarageDoorAccessory extends BaseAccessory {
 
             this.log.info('Auto closing the door');
             // Using setValue to trigger onSet(CLOSED) and close the door
-            this.simulatedTargetDoorState = CLOSED;
-            this.mainService().getCharacteristic(this.Characteristic.TargetDoorState).updateValue(CLOSED);
-
             this.log.info('Transitioning to CLOSING state');
+            this.simulatedTargetDoorState = CLOSED;
             this.simulatedDoorState = CLOSING;
+            this.mainService().getCharacteristic(this.Characteristic.TargetDoorState).updateValue(CLOSED);
             this.mainService().getCharacteristic(this.Characteristic.CurrentDoorState).updateValue(CLOSING);
-
-            this.log.info('Sending close command');
-            await this.sendCommands([{ code: schema.code, value: false }]);
 
             this.log.info('Waiting for openTime (' + openTime + ' sec) before transitioning to CLOSED');
             await this.delay(openTime * 1000);
