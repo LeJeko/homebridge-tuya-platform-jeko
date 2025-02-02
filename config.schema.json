@@ -154,7 +154,7 @@
                                     "type": "number",
                                     "default": 15,
                                     "condition": {
-                                        "functionBody": "return (model.options && model.options.deviceOverrides && model.options.deviceOverrides[arrayIndices[0]].category === 'ckmkzq') && && model.options.deviceOverrides[arrayIndices[0]].auto_close;"
+                                        "functionBody": "return (model.options && model.options.deviceOverrides && model.options.deviceOverrides[arrayIndices[0]].category === 'ckmkzq') && model.options.deviceOverrides[arrayIndices[0]].auto_close;"
                                     }
                                 },
                                 "unbridged": {

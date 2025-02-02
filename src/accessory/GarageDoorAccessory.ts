@@ -112,15 +112,22 @@ export default class GarageDoorAccessory extends BaseAccessory {
             // 5) The door stays open for stayOpenTime seconds than onSet(CLOSED) is called
             this.log.info('The door stays open for stayOpenTime (' + stayOpenTime + ' sec)');
             await this.delay(stayOpenTime * 1000);
+            this.log.info('Auto closing the door');
             this.simulatedTargetDoorState = CLOSED;
             this.mainService().getCharacteristic(this.Characteristic.TargetDoorState).updateValue(CLOSED);
           }
         } else {
           // Immediate close command
+          this.log.info('Starting to close (CLOSING)');
           this.simulatedDoorState = CLOSING;
+          this.log.info('Transitioning to CLOSING state');
           this.mainService().getCharacteristic(this.Characteristic.CurrentDoorState).updateValue(CLOSING);
-          await this.sendCommands([{ code: schema.code, value: false }]);
+          if (!autoClose) {
+            await this.sendCommands([{ code: schema.code, value: false }]);
+          }
+          this.log.info('Waiting for openTime (' + openTime + ' sec) before transitioning to CLOSED');
           await this.delay(openTime * 1000);
+          this.log.info('Transitioning to CLOSED state');
           this.simulatedDoorState = C_CLOSED;
           this.mainService().getCharacteristic(this.Characteristic.CurrentDoorState).updateValue(C_CLOSED);
         }
