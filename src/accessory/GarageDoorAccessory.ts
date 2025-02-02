@@ -133,8 +133,6 @@ export default class GarageDoorAccessory extends BaseAccessory {
         } else {
           // Immediate close command
           this.log.info('Transitioning to CLOSING state');
-          this.simulatedTargetDoorState = CLOSED;
-          this.mainService().getCharacteristic(this.Characteristic.TargetDoorState).updateValue(CLOSED);
           this.simulatedDoorState = CLOSING;
           this.mainService().getCharacteristic(this.Characteristic.CurrentDoorState).updateValue(CLOSING);
 
