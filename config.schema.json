@@ -130,6 +130,24 @@
                                         "functionBody": "return (model.options && model.options.deviceOverrides);"
                                     }
                                 },
+                                "open_time": {
+                                    "title": "Open time",
+                                    "description": "The time in seconds the garage door will open/close",
+                                    "type": "number",
+                                    "default": 10,
+                                    "condition": {
+                                        "functionBody": "return (model.options && model.options.deviceOverrides && model.options.deviceOverrides[arrayIndices[0]].category === 'ckmkzq');"
+                                    }
+                                },
+                                "stay_open_time": {
+                                    "title": "Stay open time",
+                                    "description": "The time in seconds the garage door will stay open",
+                                    "type": "number",
+                                    "default": 15,
+                                    "condition": {
+                                        "functionBody": "return (model.options && model.options.deviceOverrides && model.options.deviceOverrides[arrayIndices[0]].category === 'ckmkzq');"
+                                    }
+                                },
                                 "unbridged": {
                                     "title": "Unbridge",
                                     "description": "Would you like to make this device be an external device?",
@@ -360,6 +378,12 @@
                                 },
                                 {
                                     "key": "options.deviceOverrides[].category"
+                                },
+                                {
+                                    "key": "options.deviceOverrides[].open_time"
+                                },
+                                {
+                                    "key": "options.deviceOverrides[].stay_open_time"
                                 },
                                 {
                                     "key": "options.deviceOverrides[].unbridged"
