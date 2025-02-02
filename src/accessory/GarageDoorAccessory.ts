@@ -86,17 +86,19 @@ export default class GarageDoorAccessory extends BaseAccessory {
         if (value === OPEN) {
           this.simulatedTargetDoorState = value;
           // 1) Transition to OPENING state
-          this.log.info('Starting to open (OPENING)');
+          this.log.info('Transitioning to OPENING state');
           this.simulatedDoorState = OPENING;
           this.mainService().getCharacteristic(this.Characteristic.CurrentDoorState).updateValue(OPENING);
 
           // 2) Send the open command
+          this.log.info('Sending open command');
           await this.sendCommands([{ code: schema.code, value: true }]);
           if (autoClose) {
             // Reset remote to "close" as we simulate the door to close after stayOpenTime
             // With automatic closing door, sending a close command to the remote reopens the door
             // This is a workaround to prevent the door from reopening after stayOpenTime
             await this.delay(1000); // Wait one second to give the device time to react
+            this.log.info('Sending close command');
             await this.sendCommands([{ code: schema.code, value: false }]);
           }
           // 3) Wait for the open time
@@ -113,17 +115,19 @@ export default class GarageDoorAccessory extends BaseAccessory {
             this.log.info('The door stays open for stayOpenTime (' + stayOpenTime + ' sec)');
             await this.delay(stayOpenTime * 1000);
             this.log.info('Auto closing the door');
-            this.simulatedTargetDoorState = CLOSED;
             // Using setValue to trigger onSet(CLOSED) and close the door
             this.mainService().getCharacteristic(this.Characteristic.TargetDoorState).setValue(CLOSED);
           }
         } else {
           // Immediate close command
-          this.log.info('Starting to close (CLOSING)');
+          this.log.info('Transitioning to CLOSING state');
+          this.simulatedTargetDoorState = CLOSED;
+          this.mainService().getCharacteristic(this.Characteristic.TargetDoorState).updateValue(CLOSED);
           this.simulatedDoorState = CLOSING;
           this.log.info('Transitioning to CLOSING state');
           this.mainService().getCharacteristic(this.Characteristic.CurrentDoorState).updateValue(CLOSING);
           if (!autoClose) {
+            this.log.info('Sending close command');
             await this.sendCommands([{ code: schema.code, value: false }]);
           }
           this.log.info('Waiting for openTime (' + openTime + ' sec) before transitioning to CLOSED');
