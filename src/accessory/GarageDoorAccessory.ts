@@ -111,12 +111,23 @@ export default class GarageDoorAccessory extends BaseAccessory {
 
             // Send "true" to open
             this.log.info('Sending ON (true) to open');
-            await this.sendCommands([{ code: schema.code, value: true }]);
+            try {
+              await this.sendCommands([{ code: schema.code, value: true }]);
+            } catch (e) {
+              this.log.error('Error sending command', e);
+              this.log.warn('continuing with the simulation');
+            }
+
             if (autoClose) {
               this.log.info('Auto-closing is enabled');
               await this.delay(1000);
               this.log.info('Ending impulse -> OFF (false)');
-              await this.sendCommands([{ code: schema.code, value: false }]);
+              try {
+                await this.sendCommands([{ code: schema.code, value: false }]);
+              } catch (e) {
+                this.log.error('Error sending command', e);
+                this.log.warn('continuing with the simulation');
+              }
             }
 
             // Wait openTime
@@ -168,7 +179,12 @@ export default class GarageDoorAccessory extends BaseAccessory {
 
             // Send "false" to close
             this.log.info('Sending OFF (false) to close');
-            await this.sendCommands([{ code: schema.code, value: false }]);
+            try {
+              await this.sendCommands([{ code: schema.code, value: false }]);
+            } catch (e) {
+              this.log.error('Error sending command', e);
+              this.log.warn('continuing with the simulation');
+            }
 
             // Wait openTime
             this.log.info(`Waiting ${openTime}s for CLOSING to complete`);
